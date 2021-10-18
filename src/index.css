@@ -17,8 +17,7 @@ body {
     margin-bottom: 10px;
   }
   
-  .square {
-    background: #fff;
+  .square, .square-hightLight {    
     border: 1px solid #999;
     float: left;
     font-size: 24px;
@@ -31,6 +30,15 @@ body {
     text-align: center;
     width: 34px;
   }
+
+  .square {
+    background: #fff;
+    
+  }
+
+  .square-hightLight { 
+    background: #fff123;
+  }
   
   .square:focus {
     outline: none;
@@ -40,12 +48,50 @@ body {
     background: #ddd;
   }
   
-  .game {
+  .game-board {
     display: flex;
     flex-direction: row;
   }
-  
-  .game-info {
-    margin-left: 20px;
+
+  .game-dashboard { 
+    display: flex;
+    flex-direction: column;
   }
   
+  .game-info {    
+    margin-top: 10px;
+    margin-right: 20px;
+  }
+
+  .game-setting {
+    margin-left: 10px;    
+    margin-right: 10px;    
+  }
+
+  .game-button { 
+    display: flex;    
+    flex-direction: row;        
+  }
+
+  .game-button-item { 
+    font-size: large;
+    flex: 1;    
+    text-align: center;
+  }
+
+  .game-button-newgame { 
+    font-size: large;        
+    text-align: center;
+    flex: 1;
+    margin-top: 10px;    
+    margin-bottom: 10px;
+  }
+  .li-active { 
+    font-weight: bold;
+    color: #FF0000;
+  }
+
+  .li-inactive { 
+    font-weight: 100;
+    color: black;
+  }

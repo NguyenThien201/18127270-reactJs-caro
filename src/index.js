@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 import "./index.css";
 function Square(props) {
   return (
-    <button className="square" onClick={props.onClick}>
-      {props.value}
+    <button className={props.hightLight === true ? "square-hightLight" :  "square"} onClick={props.onClick}>      
+    {props.value}
     </button>
   );
 }
@@ -13,7 +13,8 @@ class Board extends React.Component {
   renderSquare(i) {
     return (
       <Square
-        value={this.props.squares[i]}
+        value={this.props.squares[i]}        
+        hightLight={i === this.props.poses[this.props.poses.length - 1]}
         onClick={() => this.props.onClick(i)}
       />
     );
@@ -21,9 +22,7 @@ class Board extends React.Component {
 
   renderRow(rowIndex, items) {
     var row = [];
-
-    for (var i = 0; i < items; i++) {
-      //damn why this need to be here?
+    for (var i = 0; i < items; i++) {      
       let cell = this.renderSquare(rowIndex * items + i);
       row.push(cell);
     }
@@ -41,7 +40,7 @@ class Board extends React.Component {
 
   render() {
     return (
-        <div>{this.renderBoard(5, 5)}</div>      
+        <div>{this.renderBoard(this.props.size, this.props.size)}</div>      
     );
   }
 }
@@ -49,16 +48,19 @@ class Board extends React.Component {
 class Game extends React.Component {
   constructor(props) {
     super(props);
+
+    /// Set state here - component properties
     this.state = {
       history: [
         {
           squares: Array(9).fill(null),
           poses: [],
         },
-      ],      
-      pos: [null, null],
+      ],            
       stepNumber: 0,
-      xIsNext: true,
+      xIsNext: true,      
+      tableSize: 3,
+      revertMoveList: false,
     };
   }
 
@@ -67,21 +69,57 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     const poses = current.poses.slice();
+    const size = this.state.tableSize;
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
-    poses.push([Math.floor(i/5), i - (5 * Math.floor(i/5))]);
+    
+    poses.push(i);
     this.setState({
       history: history.concat([
         {
           squares: squares,
           poses: poses,
         },
-      ]),
-      pos: [Math.floor(i/5), i - (5 * (i % 5))],
+      ]),      
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
+    });
+  }
+
+  increaseTablesize() { 
+    this.newGame()
+    this.setState({
+      tableSize: this.state.tableSize + 1,
+    })
+  }
+
+  decreaseTablesize() {     
+    if (this.state.tableSize > 3) { 
+      this.newGame()
+      this.setState({
+        tableSize: this.state.tableSize - 1,
+      })
+    }    
+  }
+
+  newGame() { 
+    this.setState({
+      history: [
+        {
+          squares: Array(9).fill(null),
+          poses: [],
+        },
+      ],            
+      stepNumber: 0,
+      xIsNext: true,
+    })
+  }
+
+  revertMoveList() { 
+    this.setState({
+      revertMoveList: !this.state.revertMoveList,
     });
   }
 
@@ -94,14 +132,18 @@ class Game extends React.Component {
 
   render() {
     const history = this.state.history;
+    const size = this.state.tableSize;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
-    
+    const winner = calculateWinner(current.squares, size, current.poses[current.poses.length - 1]);
+    const revert = this.state.revertMoveList;
     const moves = history.map((step, move) => {
-      const desc = move ? "Go to move #" + move + " - "+  step.poses[move-1] : "Go to game start";
+      const i = step.poses[move-1]
+      const x = Math.floor(i/size).toString()
+      const y = (i - (size * Math.floor(i/size))).toString()
+      const desc = move ? "Go to move #" + move + " - (" + x + " - " +  y +")": "Go to game start";
       return (
         <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          <button className={this.state.stepNumber === move ? 'li-active' : 'li-inactive'} onClick={() => this.jumpTo(move)}>{desc}</button>          
         </li>
       );
     });
@@ -114,16 +156,40 @@ class Game extends React.Component {
     }
 
     return (
-      <div className="game">
+      <div className="game-board">
+        <div className="game-setting">
+          <p>Change table size:</p>
+
+          {/*Change tablesize  */}
+          <div className="game-button">
+            <button className="game-button-item" onClick={() => this.decreaseTablesize()}>-1</button>
+            <strong className="game-button-item" >{this.state.tableSize}</strong>
+            <button className="game-button-item" onClick={() => this.increaseTablesize()}>+1</button>            
+          </div>
+          <div className="game-button">
+          <button className="game-button-newgame" onClick={() => this.newGame()}>New game</button>
+          <button className="game-button-newgame" onClick={() => this.revertMoveList()}>Revert Move List</button>
+          </div>
+      
+
+
+          {/*List of moves*/}
+          <div className="game-info">
+            <div>{status}</div>            
+            <ol>{revert ? moves.reverse() : moves}</ol>
+          </div>
+
+        </div>
+
+
+        {/* Game table */}
         <div className="game-board">
           <Board
             squares={current.squares}
+            poses={current.poses}
+            size={this.state.tableSize}
             onClick={(i) => this.handleClick(i)}
           />
-        </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
         </div>
       </div>
     );
@@ -134,7 +200,7 @@ class Game extends React.Component {
 
 ReactDOM.render(<Game />, document.getElementById("root"));
 
-function calculateWinner(squares) {
+function calculateWinner(squares, size, current) {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -150,6 +216,10 @@ function calculateWinner(squares) {
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
       return squares[a];
     }
+  }
+  // ngang
+  for (let i = 0; i < 5; i++) {
+    
   }
   return null;
 }
