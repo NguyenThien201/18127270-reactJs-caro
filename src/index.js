@@ -3,8 +3,11 @@ import ReactDOM from "react-dom";
 import "./index.css";
 function Square(props) {
   return (
-    <button className={props.hightLight === true ? "square-hightLight" :  "square"} onClick={props.onClick}>      
-    {props.value}
+    <button
+      className={props.hightLight === true ? "square-hightLight" : "square"}
+      onClick={props.onClick}
+    >
+      {props.value}
     </button>
   );
 }
@@ -13,8 +16,8 @@ class Board extends React.Component {
   renderSquare(i) {
     return (
       <Square
-        value={this.props.squares[i]}        
-        hightLight={i === this.props.poses[this.props.poses.length - 1]}
+        value={this.props.squares[i]}
+        hightLight={i === this.props.poses[this.props.poses.length - 1] || this.props.winner.includes(i)}
         onClick={() => this.props.onClick(i)}
       />
     );
@@ -22,7 +25,7 @@ class Board extends React.Component {
 
   renderRow(rowIndex, items) {
     var row = [];
-    for (var i = 0; i < items; i++) {      
+    for (var i = 0; i < items; i++) {
       let cell = this.renderSquare(rowIndex * items + i);
       row.push(cell);
     }
@@ -39,9 +42,7 @@ class Board extends React.Component {
   }
 
   render() {
-    return (
-        <div>{this.renderBoard(this.props.size, this.props.size)}</div>      
-    );
+    return <div>{this.renderBoard(this.props.size, this.props.size)}</div>;
   }
 }
 
@@ -56,11 +57,12 @@ class Game extends React.Component {
           squares: Array(9).fill(null),
           poses: [],
         },
-      ],            
+      ],
       stepNumber: 0,
-      xIsNext: true,      
-      tableSize: 3,
+      xIsNext: true,
+      tableSize: 5,
       revertMoveList: false,
+      highLightArray: [],
     };
   }
 
@@ -74,7 +76,7 @@ class Game extends React.Component {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
-    
+
     poses.push(i);
     this.setState({
       history: history.concat([
@@ -82,42 +84,43 @@ class Game extends React.Component {
           squares: squares,
           poses: poses,
         },
-      ]),      
+      ]),
       stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
     });
   }
 
-  increaseTablesize() { 
-    this.newGame()
+  increaseTablesize() {
+    this.newGame();
     this.setState({
       tableSize: this.state.tableSize + 1,
-    })
+    });
   }
 
-  decreaseTablesize() {     
-    if (this.state.tableSize > 3) { 
-      this.newGame()
+  decreaseTablesize() {
+    if (this.state.tableSize > 5) {
+      this.newGame();
       this.setState({
         tableSize: this.state.tableSize - 1,
-      })
-    }    
+      });
+    }
   }
 
-  newGame() { 
+  newGame() {
     this.setState({
       history: [
         {
           squares: Array(9).fill(null),
           poses: [],
         },
-      ],            
+      ],
       stepNumber: 0,
       xIsNext: true,
-    })
+      highLightArray: [],
+    });
   }
 
-  revertMoveList() { 
+  revertMoveList() {
     this.setState({
       revertMoveList: !this.state.revertMoveList,
     });
@@ -134,16 +137,29 @@ class Game extends React.Component {
     const history = this.state.history;
     const size = this.state.tableSize;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares, size, current.poses[current.poses.length - 1]);
+    const winner = calculateWinner(
+      current.squares,
+      size,
+      current.poses[current.poses.length - 1]
+    );
     const revert = this.state.revertMoveList;
     const moves = history.map((step, move) => {
-      const i = step.poses[move-1]
-      const x = Math.floor(i/size).toString()
-      const y = (i - (size * Math.floor(i/size))).toString()
-      const desc = move ? "Go to move #" + move + " - (" + x + " - " +  y +")": "Go to game start";
+      const i = step.poses[move - 1];
+      const x = Math.floor(i / size).toString();
+      const y = (i - size * Math.floor(i / size)).toString();
+      const desc = move
+        ? "Go to move #" + move + " - (" + x + " - " + y + ")"
+        : "Go to game start";
       return (
-        <li key={move}>
-          <button className={this.state.stepNumber === move ? 'li-active' : 'li-inactive'} onClick={() => this.jumpTo(move)}>{desc}</button>          
+        <li key={move}>          
+          <button
+            className={
+              this.state.stepNumber === move ? "li-active" : "li-inactive"
+            }
+            onClick={() => this.jumpTo(move)}
+          >
+            {desc}
+          </button>
         </li>
       );
     });
@@ -151,6 +167,7 @@ class Game extends React.Component {
     let status;
     if (winner) {
       status = "Winner: " + winner;
+
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
@@ -162,31 +179,48 @@ class Game extends React.Component {
 
           {/*Change tablesize  */}
           <div className="game-button">
-            <button className="game-button-item" onClick={() => this.decreaseTablesize()}>-1</button>
-            <strong className="game-button-item" >{this.state.tableSize}</strong>
-            <button className="game-button-item" onClick={() => this.increaseTablesize()}>+1</button>            
+            <button
+              className="game-button-item"
+              onClick={() => this.decreaseTablesize()}
+            >
+              -1
+            </button>
+            <strong className="game-button-item">{this.state.tableSize}</strong>
+            <button
+              className="game-button-item"
+              onClick={() => this.increaseTablesize()}
+            >
+              +1
+            </button>
           </div>
           <div className="game-button">
-          <button className="game-button-newgame" onClick={() => this.newGame()}>New game</button>
-          <button className="game-button-newgame" onClick={() => this.revertMoveList()}>Revert Move List</button>
+            <button
+              className="game-button-newgame"
+              onClick={() => this.newGame()}
+            >
+              New game
+            </button>
+            <button
+              className="game-button-newgame"
+              onClick={() => this.revertMoveList()}
+            >
+              Revert Move List
+            </button>
           </div>
-      
-
 
           {/*List of moves*/}
           <div className="game-info">
-            <div>{status}</div>            
+            <div>{status}</div>
             <ol>{revert ? moves.reverse() : moves}</ol>
           </div>
-
         </div>
-
 
         {/* Game table */}
         <div className="game-board">
           <Board
             squares={current.squares}
             poses={current.poses}
+            winner={winner ? winner : []}
             size={this.state.tableSize}
             onClick={(i) => this.handleClick(i)}
           />
@@ -201,25 +235,112 @@ class Game extends React.Component {
 ReactDOM.render(<Game />, document.getElementById("root"));
 
 function calculateWinner(squares, size, current) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-  for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+  var currentPlayer = squares[current];
+
+  // ngang trái
+  var score = 0;
+  var min = current;
+  var max = current;
+  var step = 0;
+  for (let i = 0; i < 5 && i - 1 < current % size; i++) {
+    if (squares[current - i] === currentPlayer) {
+      score += 1;
+      min = current - i;
+    } else {
+      break;
     }
   }
-  // ngang
-  for (let i = 0; i < 5; i++) {
-    
+
+  // ngang phải
+  for (let i = 1; i < 5 && i - 1 < size - (current % size); i++) {
+    if (squares[current + i] === currentPlayer) {
+      score += 1;
+      max = current + i;
+    } else {
+      break;
+    }
   }
+
+  if (score >= 5) {
+    return [min, max, step];
+  }
+
+  score = 0;
+  var highLight = []
+  // dọc trên
+  for (let i = 0; current - i * size > 0; i++) {
+    if (squares[current - i*size] === currentPlayer) {
+      score += 1;      
+      highLight.push(current - i*size);
+    } else {
+      break;
+    }
+  }
+
+  // dọc dưới
+  for (let i = 1; current + i * size < size*size; i++) {
+    if (squares[current + i*size] === currentPlayer) {
+      score += 1;
+      highLight.push(current + i*size);
+    } else {
+      break;
+    }
+  }
+
+  if (score >= 5) {
+    return highLight;
+  }
+
+  score = 0;
+  highLight = [];
+  // chéo trái trên
+  for (let i = 0; current - i * (size+1) > 0; i++) {
+    if (squares[current - i*(size+1)] === currentPlayer) {
+      score += 1;      
+      highLight.push(current - i*(size+1));
+    } else {
+      break;
+    }
+  }
+
+  // chéo phải dưới
+  for (let i = 1; current + i * (size+1) < size*size; i++) {
+    if (squares[current + i*(size+1)] === currentPlayer) {
+      score += 1;
+      highLight.push(current + i*(size+1));
+    } else {
+      break;
+    }
+  }
+  if (score >= 5) {
+    return highLight;
+  }
+
+  
+  score = 0
+  highLight = []
+  // chéo phải trên
+  for (let i = 0; current - i * (size-1) > 0; i++) {
+    if (squares[current - i*(size-1)] === currentPlayer) {
+      score += 1;      
+      highLight.push(current - i*(size-1));
+    } else {
+      break;
+    }
+  }
+
+  // chéo trái dưới
+  for (let i = 1; current + i * (size-1) < size*size; i++) {
+    if (squares[current + i*(size-1)] === currentPlayer) {
+      score += 1;
+      highLight.push(current + i*(size-1));
+    } else {
+      break;
+    }
+  }
+  if (score >= 5) {
+    return highLight;
+  }
+
   return null;
 }
