@@ -168,7 +168,7 @@ class Game extends React.Component {
 
     let status;
     if (winner) {
-      status = "Winner: " + winner;
+      status = "Winner: " + (this.state.xIsNext ? "O" : "X");
     } else {
       if (current.poses.length === size * size) {
         status = "No one win, DRAW!";
@@ -225,13 +225,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             poses={current.squares}
-            winner={
-              winner
-                ? winner
-                : current.poses.length === size * size
-                ? current.poses
-                : []
-            }
+            winner={winner ? winner : []}
             size={this.state.tableSize}
             onClick={(i) => this.handleClick(i)}
           />
