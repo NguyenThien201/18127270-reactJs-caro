@@ -17,7 +17,10 @@ class Board extends React.Component {
     return (
       <Square
         value={this.props.squares[i]}
-        hightLight={i === this.props.poses[this.props.poses.length - 1] || this.props.winner.includes(i)}
+        hightLight={
+          i === this.props.poses[this.props.poses.length - 1] ||
+          this.props.winner.includes(i)
+        }
         onClick={() => this.props.onClick(i)}
       />
     );
@@ -71,7 +74,6 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     const poses = current.poses.slice();
-    const size = this.state.tableSize;
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
@@ -151,7 +153,7 @@ class Game extends React.Component {
         ? "Go to move #" + move + " - (" + x + " - " + y + ")"
         : "Go to game start";
       return (
-        <li key={move}>          
+        <li key={move}>
           <button
             className={
               this.state.stepNumber === move ? "li-active" : "li-inactive"
@@ -167,9 +169,12 @@ class Game extends React.Component {
     let status;
     if (winner) {
       status = "Winner: " + winner;
-
     } else {
-      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+      if (current.poses.length === size * size) {
+        status = "No one win, DRAW!";
+      } else {
+        status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+      }
     }
 
     return (
@@ -219,8 +224,14 @@ class Game extends React.Component {
         <div className="game-board">
           <Board
             squares={current.squares}
-            poses={current.poses}
-            winner={winner ? winner : []}
+            poses={current.squares}
+            winner={
+              winner
+                ? winner
+                : current.poses.length === size * size
+                ? current.poses
+                : []
+            }
             size={this.state.tableSize}
             onClick={(i) => this.handleClick(i)}
           />
@@ -266,22 +277,22 @@ function calculateWinner(squares, size, current) {
   }
 
   score = 0;
-  var highLight = []
+  var highLight = [];
   // dọc trên
   for (let i = 0; current - i * size > 0; i++) {
-    if (squares[current - i*size] === currentPlayer) {
-      score += 1;      
-      highLight.push(current - i*size);
+    if (squares[current - i * size] === currentPlayer) {
+      score += 1;
+      highLight.push(current - i * size);
     } else {
       break;
     }
   }
 
   // dọc dưới
-  for (let i = 1; current + i * size < size*size; i++) {
-    if (squares[current + i*size] === currentPlayer) {
+  for (let i = 1; current + i * size < size * size; i++) {
+    if (squares[current + i * size] === currentPlayer) {
       score += 1;
-      highLight.push(current + i*size);
+      highLight.push(current + i * size);
     } else {
       break;
     }
@@ -294,20 +305,28 @@ function calculateWinner(squares, size, current) {
   score = 0;
   highLight = [];
   // chéo trái trên
-  for (let i = 0; current - i * (size+1) > 0; i++) {
-    if (squares[current - i*(size+1)] === currentPlayer) {
-      score += 1;      
-      highLight.push(current - i*(size+1));
+  for (let i = 0; current - i * (size + 1) > 0; i++) {
+    const pos = current - i * (size + 1);
+    if (squares[pos] === currentPlayer) {
+      score += 1;
+      highLight.push(pos);
+      if (pos % size === size - 1 || pos % size === 0) {
+        break;
+      }
     } else {
       break;
     }
   }
 
   // chéo phải dưới
-  for (let i = 1; current + i * (size+1) < size*size; i++) {
-    if (squares[current + i*(size+1)] === currentPlayer) {
+  for (let i = 1; current + i * (size + 1) < size * size; i++) {
+    const pos = current + i * (size + 1);
+    if (squares[pos] === currentPlayer) {
       score += 1;
-      highLight.push(current + i*(size+1));
+      highLight.push(pos);
+      if (pos % size === size - 1 || pos % size === 0) {
+        break;
+      }
     } else {
       break;
     }
@@ -316,24 +335,31 @@ function calculateWinner(squares, size, current) {
     return highLight;
   }
 
-  
-  score = 0
-  highLight = []
+  score = 0;
+  highLight = [];
   // chéo phải trên
-  for (let i = 0; current - i * (size-1) > 0; i++) {
-    if (squares[current - i*(size-1)] === currentPlayer) {
-      score += 1;      
-      highLight.push(current - i*(size-1));
+  for (let i = 0; current - i * (size - 1) > 0; i++) {
+    const pos = current - i * (size - 1);
+    if (squares[pos] === currentPlayer) {
+      score += 1;
+      highLight.push(pos);
+      if (pos % size === size - 1 || pos % size === 0) {
+        break;
+      }
     } else {
       break;
     }
   }
 
   // chéo trái dưới
-  for (let i = 1; current + i * (size-1) < size*size; i++) {
-    if (squares[current + i*(size-1)] === currentPlayer) {
+  for (let i = 1; current + i * (size - 1) < size * size; i++) {
+    const pos = current + i * (size - 1);
+    if (squares[pos] === currentPlayer) {
       score += 1;
-      highLight.push(current + i*(size-1));
+      highLight.push(pos);
+      if (pos % size === size - 1 || pos % size === 0) {
+        break;
+      }
     } else {
       break;
     }
